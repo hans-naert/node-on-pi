@@ -5,12 +5,16 @@ import { Server } from 'socket.io';
 import onoff from 'onoff';
 import i2cbus from 'i2c-bus';
 
-setInterval(() => {
-  i2cbus.openPromisified(1)
-    .then(i2c1 => i2c1.readByte(0x48, 0x00)
-      .then(temperature => console.log(temperature))
-      .then(_ => i2c1.close())
-      .catch(error => console.log(error)));
+setInterval(async () => {
+  try {
+    let i2c1 = await i2cbus.openPromisified(1);
+    let temperature= await i2c1.readByte(0x48, 0x00);
+    console.log(temperature);
+    await i2c1.close();
+  }
+  catch(error) {
+    console.log(error);
+  }
 }, 5000);
 
 var relais = new onoff.Gpio(17 + 512, 'out'); //use GPIO pin 17, and specify that it is output
