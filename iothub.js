@@ -14,14 +14,14 @@ client.open()
 
 //send messages
 let messageId = 0;
-let message = new Message(JSON.stringify({
+let messageData = {
     messageId: messageId,
     deviceId: 'Raspberry Pi Web Client',
     temperature: 20,
     humidity: 50
-}));
+};
 setInterval(() => {
-    client.sendEvent({ ...message, messageId: messageId++ })
+    client.sendEvent(new Message(JSON.stringify({...messageData, messageId:messageId++})))
     .then((connected) => console.log(`IOTHUB connected: ${JSON.stringify(connected)}`))
     .catch((error) => console.log(`IOTHUB error: ${JSON.stringify(error)}`))
 }
