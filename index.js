@@ -2,15 +2,38 @@ import express from 'express';
 import { createServer } from 'node:http';
 import path from 'path';
 import { Server } from 'socket.io';
-import onoff from 'onoff';
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const gpiod = require('node-gpiod');
 
-var relais = new onoff.Gpio(17+512, 'out'); //use GPIO pin 17, and specify that it is output
+const gpio = new gpiod('/dev/gpiochip0');
+var relais, input18;
 
-var input18 = new onoff.Gpio(18+512, 'in', 'both');
-console.log('watch input 18')
-input18.watch((err,value) => {console.log(`input18 changed to ${value}`)});
-setInterval(() => {console.log(`input18 is ${input18.readSync()}`)},5000);
+// Initialize GPIO asynchronously
+await gpio.open();
 
+// Request output mode for GPIO 17 (relay)
+relais = await gpio.request_mode(17, gpiod.OUTPUT_MODE, 0, "relay");
+
+// Request event for GPIO 18 (input with edge detection)
+input18 = await gpio.request_event(18, gpiod.INPUT_MODE, gpiod.BOTH_EDGE, "input18");
+console.log('watch input 18');
+
+// Attach event handler for input18
+gpio.attach_event(input18, (err, event) => {
+  if (err) return console.error(err);
+  console.log(`input18 changed to ${event.id === gpiod.EVENT_FALLING ? "FALLING" : "RISING"}`);
+});
+
+// Periodic status check
+setInterval(async () => {
+  try {
+    const value = await gpio.get_values(relais);
+    console.log(`relais is ${value}`);
+  } catch (err) {
+    console.error(err);
+  }
+}, 5000);
 
 console.log(relais);
 const app = express();
@@ -30,15 +53,20 @@ io.on('connection', (socket) => {
   socket.on('disconnect',()=> {
     console.log('a user is disconnected')
   });
-  socket.on('toggle', (msg) =>
+  socket.on('toggle', async (msg) =>
   {
-  if (relais.readSync() === 0) { //check the pin state, if the state is 0 (or off)
-      relais.writeSync(1);
-      console.log('set pin state to 1 (turn LED on)');
-    } else {
-      relais.writeSync(0);
-      console.log('set pin state to 0 (turn LED off)');
-    }  
+    try {
+      const currentValue = await gpio.get_values(relais);
+      if (currentValue === 0) { //check the pin state, if the state is 0 (or off)
+        await gpio.set_values(relais, 1);
+        console.log('set pin state to 1 (turn LED on)');
+      } else {
+        await gpio.set_values(relais, 0);
+        console.log('set pin state to 0 (turn LED off)');
+      }
+    } catch (err) {
+      console.error('Toggle error:', err);
+    }
   });
   socket.on('chat message', (msg) => 
   {

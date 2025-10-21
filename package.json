@@ -13,7 +13,7 @@
   "license": "ISC",
   "dependencies": {
     "express": "^4.21.1",
-    "onoff": "^6.0.3",
+    "node-gpiod": "^1.0.2",
     "socket.io": "^4.8.1"
   }
 }
