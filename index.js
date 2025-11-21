@@ -5,7 +5,7 @@ import { Server } from 'socket.io';
 import onoff from 'onoff';
 import './iothub.js';
 
-var relais = new onoff.Gpio(17+512, 'out'); //use GPIO pin 17, and specify that it is output
+var relais = new onoff.Gpio(20+512, 'out'); //use GPIO pin 20, and specify that it is output
 console.log(relais);
 const app = express();
 const server = createServer(app);
