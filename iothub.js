@@ -1,6 +1,6 @@
 import pkg from 'azure-iot-device';
 const { Client, Message } = pkg;
-import { Mqtt as Protocol } from 'azure-iot-device-mqtt';
+import { Amqp as Protocol } from 'azure-iot-device-amqp';
 import { connectionString } from './settings.js';
 
 
